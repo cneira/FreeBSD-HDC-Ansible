@@ -1,0 +1,2 @@
+# role create base jail
+- include: base.yml

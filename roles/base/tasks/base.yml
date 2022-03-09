@@ -1,0 +1,52 @@
+---
+- name : Preparing local environment
+  set_fact:
+    #base: "{{ 99999999999999999995 | random | to_uuid }}-base.txz"
+    base: base.txz
+    jail_dir: "{{  jail_dataset.split('/')[1] }}"
+
+
+- name: Checking if base jail exists if exists, no base jail will be created
+  stat:
+      path: /{{jail_dir}}/{{ base_jail }}
+  register: base_jail_stat_result
+
+- name: Create dataset for jails 
+  shell:
+      cmd: >
+              zfs create -o mountpoint=/"{{jail_dir}}"  "{{ jail_dataset }}"   
+  ignore_errors: yes 
+  when: not base_jail_stat_result.stat.exists
+
+- name : Fetching base jail for {{ rel  }} RELEASE {{ arch }} 
+  shell:
+     cmd: >
+              fetch  'https://download.freebsd.org/ftp/releases/{{ arch  }}/{{ rel }}-RELEASE/base.txz' -o '/tmp/{{ base }}'
+  when: not base_jail_stat_result.stat.exists
+
+- name : Creating base jail  {{ base_jail }}
+  shell:
+      cmd: >
+              zfs create '{{ jail_dataset }}/{{ base_jail }}'
+  ignore_errors: yes 
+  when: not base_jail_stat_result.stat.exists
+
+- name : Populating  base jail with base for {{ rel  }} RELEASE 
+  become: yes 
+  shell: 
+    cmd: > 
+           tar  -xf /tmp/{{ base  }} -C  /{{ jail_dir }}/{{ base_jail }}/
+  when: not base_jail_stat_result.stat.exists
+
+
+- name : Taking snapshot for base jail for {{ rel  }} RELEASE 
+  shell:
+      cmd: >
+              zfs snapshot '{{ jail_dataset}}/{{ base_jail }}@{{ snapshot_name }}'
+  when: not base_jail_stat_result.stat.exists
+
+- name :  Cleanup temp files
+  shell:
+      cmd: >
+              rm /tmp/"{{ base }}"
+  when: not base_jail_stat_result.stat.exists

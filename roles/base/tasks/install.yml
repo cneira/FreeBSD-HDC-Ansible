@@ -1,12 +1,1 @@
-- name: Create opc account
-  become: yes
-  ansible.builtin.user:
-      name: opc
-
-- name: Add ssh key
-  ansible.posix.authorized_key:
-    user: opc
-    state: present
-    key: "{{ lookup('file', '/Users/carlosneira/.ssh/id_rsa.pub') }}"
-
 

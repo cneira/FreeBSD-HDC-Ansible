@@ -1,3 +1,4 @@
 - hosts: jail0
   roles:
-    - { role: create_jail ,  jail_name: test4 , base_jail: ansible_base13 , snapshot_name: final, jail_dataset: zroot/jails , jail_dir: /jails, gw: 192.168.1.1, ip: 192.168.1.230 , netmask: 255.255.255.0, memory: 512m }
+    - { role: create_jail ,  jail_name: test4, base_jail: ansible_base13 , snapshot_name: final, jail_dataset: zroot/jails , jail_dir: /jails, gw: 192.168.1.1, ip: 192.168.1.230 , netmask: 255.255.255.0, memory: 512m , bridged_nic: vtnet0 , ssh_key:  "{{ lookup('file', '/Users/carlosneira/.ssh/id_rsa.pub') }}"
+}

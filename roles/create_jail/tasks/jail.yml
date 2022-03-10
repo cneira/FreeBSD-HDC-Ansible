@@ -1,14 +1,65 @@
 - name : Preparing local environment for jail 
   set_fact:
     jail_temp: "{{ 99999999999999999995 | random | to_uuid }}.jail"
+    user_temp: "{{ 99999999999999999995 | random | to_uuid }}.user"
 
 - name:  Create jail config  for {{ jail_name }}
   ansible.builtin.template:
     src: files/jail_template.conf
     dest: /tmp/{{jail_temp}}
 
-- name: Create jail 
+- name: Remove jail {{ jail_name }} 
+  become: true
+  shell:
+       cmd: >
+              jail -r {{ jail_name }}
+  ignore_errors: yes 
+
+- name: Creating jail  {{ jail_name }} with ip address  {{ ip }}
   become: true
   shell:
        cmd: >
               jail -cmf /tmp/{{jail_temp}}
+
+- name: Setting sshd_enable=YES {{ jail_name }} with ip address  {{ ip }}
+  become: true
+  shell:
+       cmd: >
+              jexec {{ jail_name }}  sysrc sshd_enable=YES
+
+- name: Starting sshd service 
+  become: true
+  shell:
+       cmd: >
+               jexec {{ jail_name }} service sshd onestart
+  ignore_errors: yes 
+
+- name: Creating file for adduser 
+  copy:
+      dest: "/{{jail_dir}}/{{jail_name}}/tmp/{{ user_temp }}"
+      content: |
+              opc::::::::/bin/sh:toor
+
+- name: Adding user to jail {{ jail_name }} format is name:uid:gid:class:change:expire:gecos:home_dir:shell:password
+  become: true
+  shell: 
+     cmd: > 
+       jexec {{ jail_name }} adduser -f  /tmp/{{ user_temp }}  
+  register: out
+       
+- name: Adding ssh_key on {{ jail_name }}
+  become: true
+  shell:
+       cmd: >
+              jexec {{ jail_name }}  echo {{ ssh_key }} >> /root/.ssh/authorized_keys
+
+- name: Create opc account
+  become: yes
+  ansible.builtin.user:
+      name: opc
+
+- name: Add ssh key
+  ansible.posix.authorized_key:
+    user: opc
+    state: present
+    key: "{{ lookup('file', '/Users/carlosneira/.ssh/id_rsa.pub') }}"

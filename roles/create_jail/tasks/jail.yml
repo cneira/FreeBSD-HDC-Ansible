@@ -22,7 +22,6 @@
               zfs umount -f /{{jail_dir}}/{{jail_name}}
   ignore_errors: yes 
 
-
 - name: Destroy jail {{ jail_name }} 
   shell:
      cmd:  > 

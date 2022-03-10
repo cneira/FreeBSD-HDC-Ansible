@@ -1,17 +1,42 @@
+# The create_jail role, needs the following parameters as it re-creates a base jail, takes a snapshot and
+# then creates the jail based on the snapshot name.
+#
+# Parameters are:
+# arch:  could be amd64|arm64 whatever exists in the ftp to fetch base.txz
+# base_jail:  name of the base jail that will be created and used when a jail is provisioned.
+# snapshot_name:  name of the base jail snapshot that will be created and used when a jail is provisioned.
+# rel: could be 13.0 or whatever exists in the ftp to fetch base.txz for that release, remember jails only work on the same
+#      release or a lower version than of the host.  
+# jail_dir:  the directory where jails are going to be created. 
+# jail_dataset:  the dataset where jails are going to be created, it will created if does not exists.
+# gw: gateway ip for the jail.
+# ip: ip address that the jail will use with vnet
+# netmask: netmask for ip address 
+# bridged_nic: physical interface that will be bridged with the netgraph generated interface
+# user: this user will be created in the jail.
+# pass: password that will be used for the created user.
+# devfs_ruleset:  which devfs rule set to use on the jail, keep in mind that is generated when the base jail is created.
+#                  WARNING : the /etc/devfs.rules is overwritten with the contents specified in the base role.
+# allowed_memory: The amount of memory that the jail could use, see RCTL(8) manpage.
+# ssh_key: key to be added to .ssh/authorized_keys for user
+
 - hosts: jail0
   roles:
     - { 
         role: create_jail ,  
         jail_name: test4, 
-        base_jail: ansible_base13 , 
+        base_jail: newbase13 , 
+        arch: amd64,
         snapshot_name: final, 
         jail_dataset: zroot/jails , 
+        rel: 13.0,
         jail_dir: /jails, 
-        gw: 192.168.1.1, ip: 192.168.1.230 , 
+        gw: 192.168.1.1, 
+        ip: 192.168.1.230 , 
         netmask: 255.255.255.0, 
         allowed_memory: 512m , 
         bridged_nic: vtnet0 , 
         user: dev,
         pass: toor,
-        ssh_key:  "{{ lookup('file', '/Users/carlosneira/.ssh/id_rsa.pub') }}"
-}
+        devfs_ruleset: 1,
+        ssh_key:  "{{ lookup('file', '/Users/carlosneira/.ssh/id_rsa.pub') }}" }

@@ -15,6 +15,13 @@
               jail -r {{ jail_name }}
   ignore_errors: yes 
 
+- name: Removing ng_eifaces just to be sure (sometimes they are left even if the jail is destroyed)
+  become: true
+  shell:
+       cmd: >
+              jng shutdown {{ jail_name }}
+  ignore_errors: yes 
+
 - name: Unmount jail {{ jail_name }} 
   become: true
   shell:
@@ -26,6 +33,7 @@
   shell:
      cmd:  > 
          zfs destroy -r {{ jail_dataset }}/{{jail_name}}
+  ignore_errors: yes 
 
 - name: Creating jail  {{ jail_name }} with ip address  {{ ip }}
   become: true
@@ -70,3 +78,8 @@
       dest: "/{{jail_dir}}/{{jail_name}}/home/{{ user }}/.ssh/authorized_keys"
       content: |
               {{ ssh_key }}
+- name: cleanup
+  shell:
+    cmd: > 
+        jexec {{ jail_name}} rm /tmp/{{ user_temp}}
+  ignore_errors: yes 

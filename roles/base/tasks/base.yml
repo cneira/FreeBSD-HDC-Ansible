@@ -5,11 +5,16 @@
     base: base.txz
     jail_dir: "{{  jail_dataset.split('/')[1] }}"
 
-- name: Prepare host for using netgraph and jng for creating vnet jails
+- name: Loading kernel modules for using netgraph for vnet jails
   shell:
     cmd: > 
          kldload ng_ether
          kldload pf
+  ignore_errors: yes 
+
+- name: Copying jng script to /usr/local/bin to create vnet jails using netgraph
+  shell:
+    cmd: > 
          cp /usr/src/share/examples/jails/jng  /usr/local/bin/jng
   ignore_errors: yes 
 
@@ -61,6 +66,11 @@
 
 - name: Checking if base jail exists if exists, no base jail will be created
   stat:
+      path: /tmp/{{ base }}
+  register: base_stat_result
+
+- name: Checking if base.txz exists if exists, it will not be fetched again
+  stat:
       path: /{{jail_dir}}/{{ base_jail }}
   register: base_jail_stat_result
 
@@ -75,7 +85,7 @@
   shell:
      cmd: >
               fetch  'https://download.freebsd.org/ftp/releases/{{ arch  }}/{{ rel }}-RELEASE/base.txz' -o '/tmp/{{ base }}'
-  when: not base_jail_stat_result.stat.exists
+  when: not base_stat_result.stat.exists
 
 - name : Creating base jail  {{ base_jail }}
   shell:

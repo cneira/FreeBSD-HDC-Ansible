@@ -5,6 +5,59 @@
     base: base.txz
     jail_dir: "{{  jail_dataset.split('/')[1] }}"
 
+- name: Prepare host for using netgraph and jng for creating vnet jails
+  shell:
+    cmd: > 
+         kldload ng_ether
+         kldload pf
+         cp /usr/src/share/examples/jails/jng  /usr/local/bin/jng
+  ignore_errors: yes 
+
+- name : Reading Old /etc/devfs.rules
+  command: cat /etc/devfs.rules  
+  register: devfs_command_output
+
+- name: Print Old /etc/devfs.rules
+  debug:
+    msg: "{{devfs_command_output.stdout_lines}}"
+ 
+- name: Creating devfs rules for jails
+  copy:
+      dest: "/etc/devfs.rules"
+      content: |
+                 [devfsrules_jail=11]
+                 add include $devfsrules_hide_all
+                 add include $devfsrules_unhide_basic
+                 add include $devfsrules_unhide_login
+                 add path 'bpf*' unhide
+                 add path 'pf*' unhide
+                 add path 'pflog' unhide
+                 add path 'pfsynv' unhide
+                 [devfsrules_jail=1]
+                 add include $devfsrules_hide_all
+                 add include $devfsrules_unhide_basic
+                 add include $devfsrules_unhide_login
+                 add include $devfsrules_jail
+                 [devfsrules_jail=5]
+                 add include $devfsrules_hide_all
+                 add include $devfsrules_unhide_basic
+                 add include $devfsrules_unhide_login
+                 add path 'tun*' unhide
+                 add path zfs unhide
+                 [devfsrules_jail=12]
+                 add include $devfsrules_hide_all
+                 add include $devfsrules_unhide_basic
+                 add include $devfsrules_unhide_login
+                 add path 'bpf*' unhide
+                 add include $devfsrules_jail
+                 add path 'bpf*' unhide
+                 add path 'zfs*' unhide
+                 add path 'pf*' unhide
+                 add path 'pflog' unhide
+                 add path 'pfsynv' unhide
+                 add path 'dtrace*' unhide
+                 add path dtrace/* unhide
+  ignore_errors: yes 
 
 - name: Checking if base jail exists if exists, no base jail will be created
   stat:

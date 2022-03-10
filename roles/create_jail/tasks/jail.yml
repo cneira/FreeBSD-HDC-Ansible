@@ -15,6 +15,19 @@
               jail -r {{ jail_name }}
   ignore_errors: yes 
 
+- name: Unmount jail {{ jail_name }} 
+  become: true
+  shell:
+       cmd: >
+              zfs umount -f /{{jail_dir}}/{{jail_name}}
+  ignore_errors: yes 
+
+
+- name: Destroy jail {{ jail_name }} 
+  shell:
+     cmd:  > 
+         zfs destroy -r {{ jail_dataset }}/{{jail_name}}
+
 - name: Creating jail  {{ jail_name }} with ip address  {{ ip }}
   become: true
   shell:
@@ -34,11 +47,11 @@
                jexec {{ jail_name }} service sshd onestart
   ignore_errors: yes 
 
-- name: Creating file for adduser 
+- name: Creating file for user {{ user }} 
   copy:
       dest: "/{{jail_dir}}/{{jail_name}}/tmp/{{ user_temp }}"
       content: |
-              opc::::::::/bin/sh:toor
+              {{user}}::::::::/bin/sh:{{pass}}
 
 - name: Adding user to jail {{ jail_name }} format is name:uid:gid:class:change:expire:gecos:home_dir:shell:password
   become: true
@@ -46,20 +59,15 @@
      cmd: > 
        jexec {{ jail_name }} adduser -f  /tmp/{{ user_temp }}  
   register: out
-       
-- name: Adding ssh_key on {{ jail_name }}
-  become: true
-  shell:
-       cmd: >
-              jexec {{ jail_name }}  echo {{ ssh_key }} >> /root/.ssh/authorized_keys
+  ignore_errors: yes 
 
-- name: Create opc account
-  become: yes
-  ansible.builtin.user:
-      name: opc
+- name: Create .ssh directory exists for user {{ user }}
+  file: 
+     path:  /{{jail_dir}}/{{jail_name}}/home/{{ user }}/.ssh
+     state: directory
 
-- name: Add ssh key
-  ansible.posix.authorized_key:
-    user: opc
-    state: present
-    key: "{{ lookup('file', '/Users/carlosneira/.ssh/id_rsa.pub') }}"
+- name: Adding ssh-key for user {{ user }} 
+  copy:
+      dest: "/{{jail_dir}}/{{jail_name}}/home/{{ user }}/.ssh/authorized_keys"
+      content: |
+              {{ ssh_key }}

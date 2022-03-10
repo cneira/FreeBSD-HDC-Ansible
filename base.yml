@@ -1,6 +1,0 @@
----
-# Create base FreeBSD jail
-
-- hosts: jail0
-  roles:
-   - { role: base , arch: amd64, rel: 13.0 , base_jail: ansible_base13 , snapshot_name: final, jail_dataset: zroot/jails  }

@@ -1,0 +1,14 @@
+- name : Preparing local environment for jail 
+  set_fact:
+    jail_temp: "{{ 99999999999999999995 | random | to_uuid }}.jail"
+
+- name:  Create jail config  for {{ jail_name }}
+  ansible.builtin.template:
+    src: files/jail_template.conf
+    dest: /tmp/{{jail_temp}}
+
+- name: Create jail 
+  become: true
+  shell:
+       cmd: >
+              jail -cmf /tmp/{{jail_temp}}

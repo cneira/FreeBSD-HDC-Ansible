@@ -21,6 +21,7 @@
 - name : Reading Old /etc/devfs.rules
   command: cat /etc/devfs.rules  
   register: devfs_command_output
+  ignore_errors: yes 
 
 - name: Print Old /etc/devfs.rules
   debug:
